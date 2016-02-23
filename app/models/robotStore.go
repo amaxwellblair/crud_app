@@ -3,6 +3,7 @@ package robots
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -95,8 +96,24 @@ func (s *Store) CreateRobot(name string, function string) error {
 }
 
 // Robot returns a specific robot by ID
-func (s *Store) Robot() {
+func (s *Store) Robot(id int) (r *Robot, err error) {
+	if err = s.db.View(func(tx *bolt.Tx) error {
+		v := tx.Bucket([]byte("robots")).Get(itob(id))
+		if v == nil {
+			return errors.New("robot id doesn't exist")
+		}
+		var robot Robot
+		if err := json.Unmarshal(v, &robot); err != nil {
+			return err
+		}
+		r = &robot
 
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 func itob(v int) []byte {

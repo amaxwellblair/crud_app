@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 	"path"
+	"strconv"
 
 	"github.com/amaxwellblair/crud_app/app/models"
 )
@@ -33,7 +34,7 @@ func robotsHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		}
-	case pathID(r.URL.Path):
+	case robotsShowID(r.URL.Path):
 		if r.Method == "GET" {
 			getShowRobot(w, r, path.Base(r.URL.Path))
 		}
@@ -42,13 +43,13 @@ func robotsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func pathID(p string) string {
+func robotsShowID(p string) string {
 	b, err := path.Match("/robots/id/*", p)
 	if err != nil {
 		return ""
 	}
 	if b == true {
-		return "robots/id/" + path.Base(p)
+		return "/robots/id/" + path.Base(p)
 	}
 	return ""
 }
@@ -83,7 +84,23 @@ func postNewRobots(w http.ResponseWriter, r *http.Request) {
 }
 
 func getShowRobot(w http.ResponseWriter, r *http.Request, id string) {
+	ID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	t, err := template.ParseFiles("app/views/robots/show.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	s := mustOpenStore()
+	defer s.Close()
 
+	rbt, err := s.Robot(ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	t.Execute(w, rbt)
 }
 
 func mustOpenStore() *robots.Store {

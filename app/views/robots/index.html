@@ -8,9 +8,7 @@
     <h3>All the Robots</h3>
     <a href="/robots/new">Add a new Robot</a>
     {{range .}}
-      <p>
-        {{.Name}}
-      </p>
+      <p><a href="/robots/id/{{.ID}}">{{.Name}}</a></p>
     {{end}}
   </body>
 </html>

@@ -37,10 +37,31 @@ func robotsHandler(w http.ResponseWriter, r *http.Request) {
 	case robotsShowID(r.URL.Path):
 		if r.Method == "GET" {
 			getShowRobot(w, r, path.Base(r.URL.Path))
+		} else {
+			http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+		}
+	case robotsEditID(r.URL.Path):
+		if r.Method == "GET" {
+			getEditRobot(w, r, path.Base(path.Dir(r.URL.Path)))
+		} else if r.Method == "POST" {
+			postEditRobot(w, r, path.Base(path.Dir(r.URL.Path)))
+		} else {
+			http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		}
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+func robotsEditID(p string) string {
+	b, err := path.Match("/robots/id/*/edit", p)
+	if err != nil {
+		return ""
+	}
+	if b == true {
+		return p
+	}
+	return ""
 }
 
 func robotsShowID(p string) string {
@@ -49,7 +70,7 @@ func robotsShowID(p string) string {
 		return ""
 	}
 	if b == true {
-		return "/robots/id/" + path.Base(p)
+		return p
 	}
 	return ""
 }
@@ -101,6 +122,42 @@ func getShowRobot(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 	t.Execute(w, rbt)
+}
+
+func getEditRobot(w http.ResponseWriter, r *http.Request, id string) {
+	ID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	t, err := template.ParseFiles("app/views/robots/edit.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	s := mustOpenStore()
+	defer s.Close()
+	rbt, err := s.Robot(ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	t.Execute(w, rbt)
+}
+
+func postEditRobot(w http.ResponseWriter, r *http.Request, id string) {
+	ID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	name := r.FormValue("name")
+	function := r.FormValue("function")
+
+	s := mustOpenStore()
+	defer s.Close()
+	if err := s.UpdateRobot(ID, name, function); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	http.Redirect(w, r, "../"+id, http.StatusFound)
 }
 
 func mustOpenStore() *robots.Store {

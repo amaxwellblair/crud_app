@@ -95,6 +95,34 @@ func (s *Store) CreateRobot(name string, function string) error {
 	return nil
 }
 
+// UpdateRobot changes an existing robot within the database
+func (s *Store) UpdateRobot(id int, name string, function string) error {
+	if err := s.db.Update(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket([]byte("robots"))
+		v := bkt.Get(itob(id))
+		if v == nil {
+			return errors.New("robot id doesn't exist")
+		}
+		r, err := json.Marshal(&Robot{
+			ID:       id,
+			Name:     name,
+			Function: function,
+		})
+		if err != nil {
+			return err
+		}
+		if err := bkt.Put(itob(id), []byte(r)); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+
+}
+
 // Robot returns a specific robot by ID
 func (s *Store) Robot(id int) (r *Robot, err error) {
 	if err = s.db.View(func(tx *bolt.Tx) error {

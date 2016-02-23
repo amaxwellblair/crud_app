@@ -25,7 +25,7 @@ func TestStore_CreateRobot_CreateandRetrieveARobot(t *testing.T) {
 	}
 }
 
-func TestStore_FindRobot_RetrieveASpecificRobot(t *testing.T) {
+func TestStore_Robot_RetrieveASpecificRobot(t *testing.T) {
 	s := MustOpenStore()
 	defer Close(s)
 	name := "Roboto"
@@ -41,6 +41,32 @@ func TestStore_FindRobot_RetrieveASpecificRobot(t *testing.T) {
 		t.Fatalf("unexpected name %s", r.Name)
 	}
 
+}
+
+func TestStore_UpdateRobot_UpdateASpecificRobot(t *testing.T) {
+	s := MustOpenStore()
+	defer Close(s)
+	name := "Roboto"
+	function := "Bend things that are hard to bend"
+	s.CreateRobot(name, function)
+
+	err := s.UpdateRobot(1, "Bender", "Bend things that are hard to bend")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rbt, err := s.Robot(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if rbt.Name != "Bender" {
+		t.Fatalf("unexpected name %s", rbt.Name)
+	}
+
+}
+
+func TestStore_UpdateRobot_DoesNotCreateRobotIfDoesNotExist(t *testing.T) {
+	// TODO
 }
 
 func MustOpenStore() *robots.Store {

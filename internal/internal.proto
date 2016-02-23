@@ -1,0 +1,7 @@
+package internal;
+
+message Robot {
+    required int64 ID        = 1;
+    required string Name     = 2;
+    required string Function = 3;
+}

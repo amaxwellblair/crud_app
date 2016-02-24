@@ -12,5 +12,9 @@
       Function: {{.Function}}
     </p>
       <a href="{{.ID}}/edit">Edit Robot</a>
+      <form action="{{.ID}}" method="post">
+        <input type="hidden" name="_method" value="DELETE">
+        <input type="submit" value="Delete">
+      </form>
   </body>
 </html>

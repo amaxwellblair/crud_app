@@ -144,6 +144,21 @@ func (s *Store) Robot(id int) (r *Robot, err error) {
 	return r, nil
 }
 
+// DeleteRobot removes a robot from the database given the id
+func (s *Store) DeleteRobot(id int) error {
+	if err := s.db.Update(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket([]byte("robots"))
+		if v := bkt.Get(itob(id)); v == nil {
+			return errors.New("robot id doesn't exist")
+		}
+		bkt.Delete(itob(id))
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func itob(v int) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(v))

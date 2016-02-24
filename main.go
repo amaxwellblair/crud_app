@@ -37,20 +37,29 @@ func robotsHandler(w http.ResponseWriter, r *http.Request) {
 	case robotsShowID(r.URL.Path):
 		if r.Method == "GET" {
 			getShowRobot(w, r, path.Base(r.URL.Path))
+		} else if methodOverride(r, "DELETE") {
+			deleteShowRobot(w, r, path.Base(r.URL.Path))
 		} else {
 			http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		}
 	case robotsEditID(r.URL.Path):
 		if r.Method == "GET" {
 			getEditRobot(w, r, path.Base(path.Dir(r.URL.Path)))
-		} else if r.Method == "POST" {
-			postEditRobot(w, r, path.Base(path.Dir(r.URL.Path)))
+		} else if methodOverride(r, "PATCH") {
+			patchEditRobot(w, r, path.Base(path.Dir(r.URL.Path)))
 		} else {
 			http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		}
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+func methodOverride(r *http.Request, method string) bool {
+	if r.FormValue("_method") == method {
+		return true
+	}
+	return false
 }
 
 func robotsEditID(p string) string {
@@ -143,7 +152,7 @@ func getEditRobot(w http.ResponseWriter, r *http.Request, id string) {
 	t.Execute(w, rbt)
 }
 
-func postEditRobot(w http.ResponseWriter, r *http.Request, id string) {
+func patchEditRobot(w http.ResponseWriter, r *http.Request, id string) {
 	ID, err := strconv.Atoi(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -158,6 +167,21 @@ func postEditRobot(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 	http.Redirect(w, r, "../"+id, http.StatusFound)
+}
+
+func deleteShowRobot(w http.ResponseWriter, r *http.Request, id string) {
+	ID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	s := mustOpenStore()
+	defer s.Close()
+
+	if err := s.DeleteRobot(ID); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	http.Redirect(w, r, "../", http.StatusFound)
 }
 
 func mustOpenStore() *robots.Store {

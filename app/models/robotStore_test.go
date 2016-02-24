@@ -69,6 +69,23 @@ func TestStore_UpdateRobot_DoesNotCreateRobotIfDoesNotExist(t *testing.T) {
 	// TODO
 }
 
+func TestStore_DeleteRobot_DeletesARobotThatExists(t *testing.T) {
+	s := MustOpenStore()
+	defer Close(s)
+	name := "Roboto"
+	function := "Bend things that are hard to bend"
+	s.CreateRobot(name, function)
+
+	if err := s.DeleteRobot(1); err != nil {
+		t.Fatal(err)
+	}
+
+	if r, err := s.Robot(1); err == nil {
+		t.Fatalf("unexpected robot: %#v", r)
+	}
+
+}
+
 func MustOpenStore() *robots.Store {
 	s := robots.NewStore("../../db/test.db")
 	s.Open()
